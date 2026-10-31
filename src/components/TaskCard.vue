@@ -1,36 +1,35 @@
 <script setup>
 import { computed } from 'vue';
-
 import StatusBadge from './StatusBadge.vue';
 import PriorityBadge from './PriorityBadge.vue';
 
-// Отримуємо завдання від батьківського компонента
 const props = defineProps({
   task: {
     type: Object,
     required: true,
   },
+  editable: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-// Події, які компонент передає батьківській сторінці
 const emit = defineEmits([
   'status-change',
   'priority-change',
   'task-select',
+  'edit',
 ]);
 
-// Послідовність статусів та пріоритетів
 const statusSequence = ['todo', 'progress', 'done'];
 const prioritySequence = ['low', 'medium', 'high'];
 
-// Текст кнопки зміни статусу
 const statusActionText = computed(() => ({
   todo: 'Взяти в роботу',
   progress: 'Завершити',
   done: 'Повернути в план',
 })[props.task.status] || 'Змінити статус');
 
-// Форматування дати українською мовою
 const formattedDate = computed(() => {
   if (!props.task.dueDate) return 'Без терміну';
 
@@ -47,7 +46,7 @@ const formattedDate = computed(() => {
   }).format(date);
 });
 
-// Зміна статусу завдання
+// Зміна статусу
 function changeStatus() {
   const index = statusSequence.indexOf(props.task.status);
 
@@ -57,7 +56,7 @@ function changeStatus() {
   });
 }
 
-// Зміна пріоритету завдання
+// Зміна пріоритету
 function changePriority() {
   const index = prioritySequence.indexOf(props.task.priority);
 
@@ -67,24 +66,25 @@ function changePriority() {
   });
 }
 
-// Вибір завдання
+// Вибір завдання — зберігаємо функцію з попередньої роботи
 function selectTask() {
   emit('task-select', {
     id: props.task.id,
     title: props.task.title,
   });
 }
+
+// Передавання ID завдання для редагування
+function editTask() {
+  emit('edit', props.task.id);
+}
 </script>
 
 <template>
   <f7-card class="tf3-task-card">
     <f7-card-content>
-
       <div class="tf3-card-heading">
-        <h3 class="tf3-card-title">
-          {{ task.title }}
-        </h3>
-
+        <h3 class="tf3-card-title">{{ task.title }}</h3>
         <StatusBadge :status="task.status" />
       </div>
 
@@ -104,7 +104,6 @@ function selectTask() {
       </div>
 
       <div class="tf3-card-actions">
-
         <button
           type="button"
           class="tf3-action tf3-action--primary"
@@ -129,8 +128,15 @@ function selectTask() {
           Обрати завдання
         </button>
 
+        <button
+          v-if="editable"
+          type="button"
+          class="tf3-action"
+          @click="editTask"
+        >
+          Редагувати
+        </button>
       </div>
-
     </f7-card-content>
   </f7-card>
 </template>
